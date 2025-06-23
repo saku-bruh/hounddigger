@@ -277,45 +277,50 @@
   });
 
   /* ===================== Input Handler ===================== */
-  function handleInput(ts){
-    if (ts < digLock || msState) return;
-    const L = key['a']||key.ArrowLeft, R = key['d']||key.ArrowRight;
-    const U = key['w']||key.ArrowUp,   D = key['s']||key.ArrowDown;
+function handleInput(ts) {
+  if (breaking.length > 0 || ts < digLock || msState) return;
 
-    /* vault */
-    if (U && (L||R) && onGround()){
-      const dir = L ? -1 : 1, tx = player.x+dir, ty = player.y-1;
-      ensureRow(ty);
-      if (rows[player.y][tx]!==T.EMPTY && rows[ty][tx]===T.EMPTY){
-        player.x=tx; player.y=ty; digLock=ts+150;
-      }
-      return;
-    }
+  const L = key['a']      || key.ArrowLeft;
+  const R = key['d']      || key.ArrowRight;
+  const U = key['w']      || key.ArrowUp;
+  const D = key['s']      || key.ArrowDown;
 
-    let dx=0, dy=0;
-    if (D) dy=1; else if (L) dx=-1; else if (R) dx=1;
-    if (!dx && !dy) return;
-
-    const tx = clamp(player.x+dx, 0, COLS-1), ty = Math.max(player.y+dy,0);
+  if (U && (L||R) && onGround()) {
+    const dir = L ? -1 : 1;
+    const tx = player.x + dir, ty = player.y - 1;
     ensureRow(ty);
-    const tile = rows[ty][tx];
-
-    const crack = cb => {
-      breaking.push({x:tx,y:ty,st:ts,cb});
-      rows[ty][tx] = T.EMPTY;
-      digLock = ts + BREAK_MS;
-    };
-
-    if (dy){                     // digging down / up
-      if (tile===T.SOLID) crack(()=>step(tx,ty,true));
-      else step(tx,ty,tile!==T.HP);
-      digLock = ts + DIG_CD;
-    }else{                       // horizontal
-      if (tile===T.SOLID) crack(()=>step(tx,ty,false));
-      else step(tx,ty,false);
-      digLock = ts + HORIZ_CD;
+    if (rows[player.y][tx] !== T.EMPTY && rows[ty][tx] === T.EMPTY) {
+      player.x = tx;
+      player.y = ty;
+      digLock = ts + 150;
     }
+    return;
   }
+
+  let dx = 0, dy = 0;
+  if (D)         dy = 1;
+  else if (L)    dx = -1;
+  else if (R)    dx = 1;
+  if (!dx && !dy) return;
+
+  const tx = clamp(player.x + dx, 0, COLS - 1);
+  const ty = Math.max(player.y + dy, 0);
+  ensureRow(ty);
+  const tile = rows[ty][tx];
+
+  const crack = cb => {
+    breaking.push({ x: tx, y: ty, st: ts, cb });
+    rows[ty][tx] = T.EMPTY;
+    digLock = ts + BREAK_MS;
+  };
+
+  if (tile === T.SOLID) {
+    crack(() => step(tx, ty, dy === 1));
+  } else {
+    step(tx, ty, dy === 1 && tile !== T.HP);
+    digLock = ts + (dy === 1 ? DIG_CD : HORIZ_CD);
+  }
+}
 
   /* ===================== Sand Physics ===================== */
   function step(x,y,countDepth){
