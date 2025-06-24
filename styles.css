@@ -13,14 +13,14 @@ html, body {
 #grid {
   display: grid;
   grid-template-columns:
-    auto     /* PAD fills left */
-    420px    /* GAME fixed */
-    auto;    /* HUD fills right */
+    auto     /* D-Pad fills to the left of the display */
+    420px    /* Game fixed size */
+    auto;    /* HUD fills to the right of the display */
   height: 100%;
   width: 100%;
 }
 
-/* ─── PAD ─── */
+/* ─── D-Pad ─── */
 #pad {
   grid-column: 1;
   width: 100%;
@@ -42,14 +42,44 @@ html, body {
     inset 0 6px 8px rgba(0,0,0,0.5);
 }
 
-/* ─── GAME ─── */
+/* ─── Game Container ─── */
 #game-container {
   grid-column: 2;
   background:#0a0625;
   display:flex; align-items:center; justify-content:center;
+  position: relative;
 }
 #game {
   width:100%; height:100%; display:block;
+}
+
+/* ─── Pause Menu ─── */
+#pause-game-button {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(46, 37, 65, 0.7);
+  border: 2px solid #5a4690;
+  color: #d6c9ff;
+  font-size: 20px;
+  line-height: 36px;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 500;
+  transition: background-color 0.2s, transform 0.1s;
+  display: none;
+  user-select: none;
+}
+
+#pause-game-button:hover {
+  background-color: rgba(71, 59, 129, 0.9);
+}
+
+#pause-game-button:active {
+  transform: scale(0.95);
 }
 
 /* ─── HUD ─── */
@@ -73,7 +103,7 @@ html, body {
     inset 0 6px 8px rgba(0,0,0,0.5);
 }
 
-/* ─── D-PAD BUTTONS ─── */
+/* ─── D-Pad Buttons ─── */
 .pbtn {
   position: absolute;
   width:  clamp(100px, 12vw, 250px);
@@ -104,7 +134,7 @@ html, body {
 #left  { top:50%;   left:12%; transform:translateY(-50%) rotate(45deg); }
 #right { top:50%;   right:12%;transform:translateY(-50%) rotate(45deg); }
 
-/* ─── HUD INNER ─── */
+/* ─── HUD (Inner) ─── */
 #hudInner {
   position:absolute; inset:8px; padding:28px; overflow:hidden;
   background:linear-gradient(#1a1533,#110e25);
@@ -138,7 +168,7 @@ html, body {
   clip-path:polygon(50% 0,100% 40%,80% 100%,20% 100%,0 40%);
 }
 
-/* ─── Mobile: full screen canvas ─── */
+/* ─── Full screen canvas (Mobile) ─── */
 @media (max-width:599px){
   #pad, #hud { display:none }
   #grid { grid-template-columns:1fr }
@@ -148,7 +178,7 @@ html, body {
   #game { width:100%; height:100%; }
 }
 
-/* ─── Force-landscape overlay ─── */
+/* ─── Rotate device (mobile) overlay ─── */
 @media (orientation:portrait) and (max-width:1024px){
   body::before{
     content:"Please rotate your device";
@@ -158,4 +188,79 @@ html, body {
     font-size:7vw;z-index:999;
   }
   #grid{ filter:blur(3px) }
+}
+
+/* ─── Overlays (Title, Pause, Game Over) ─── */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(8, 6, 27, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: #fff;
+  text-align: center;
+  font-family: system-ui, Arial, sans-serif;
+}
+
+.overlay-content {
+  background-color: #1a1533;
+  padding: 30px 50px;
+  border-radius: 10px;
+  border: 3px solid #4a3780;
+  box-shadow: 0 0 25px rgba(75, 58, 128, 0.8);
+  min-width: 300px;
+  max-width: 90%;
+}
+
+.overlay h1 {
+  font-size: clamp(2.5em, 5vw, 3.5em);
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #d6c9ff;
+  text-shadow:0 0 12px #6b5cff,0 0 24px #6b5cff;
+}
+
+.overlay h2 {
+  font-size: clamp(2em, 4vw, 3em);
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #d6c9ff;
+  text-shadow:0 0 10px #6b5cff,0 0 20px #6b5cff;
+}
+
+.overlay p {
+  font-size: clamp(1em, 2.5vw, 1.3em);
+  margin-bottom: 25px;
+  color: #c0b8dd;
+}
+
+.overlay button {
+  background: linear-gradient(145deg,#3b2e6e,#2f254f);
+  border: 2px solid #5a4690;
+  color: #d6c9ff;
+  padding: 12px 25px;
+  font-size: clamp(1em, 2.5vw, 1.2em);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  margin: 10px 5px;
+  text-shadow:0 0 8px #6b5cff;
+  min-width: 150px;
+}
+
+.overlay button:hover {
+  background: linear-gradient(145deg,#52439a,#473b81);
+}
+
+.overlay button:active {
+  transform: scale(0.95);
+}
+
+#pause-screen, #game-over-screen {
+  display: none;
 }

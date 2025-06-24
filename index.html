@@ -2,17 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Hound Digger</title>
+  <title>Hole Digger</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Link to your external CSS file -->
   <link rel="stylesheet" href="styles.css">
-
-  <!-- Link to mobile detection script (runs early) -->
   <script src="mobile-detect.js"></script>
-
 </head>
 <body>
+
+  <!-- Title Screen -->
+  <div id="title-screen" class="overlay">
+    <div class="overlay-content">
+      <h1>Hole Digger</h1>
+      <p>Dig as deep as you can, collect hearts, and survive!</p>
+      <button id="start-button">Singleplayer</button>
+    </div>
+  </div>
+
+  <!-- Pause Screen -->
+  <div id="pause-screen" class="overlay">
+    <div class="overlay-content">
+      <h2>Paused</h2>
+      <button id="resume-button">Resume</button>
+      <button id="restart-button-pause">Restart</button>
+      <button id="exit-to-menu-pause">Return to the main menu</button>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="game-over-screen" class="overlay">
+    <div class="overlay-content">
+      <h2>You perished!</h2>
+      <p id="final-score">Score: 0</p>
+      <button id="restart-button-gameover">Play Again</button>
+      <button id="exit-to-menu-gameover">Return to the main menu</button>
+    </div>
+  </div>
+
   <div id="grid">
     <div id="pad">
       <div id="up"    class="pbtn" data-k="ArrowUp">
@@ -30,12 +55,13 @@
     </div>
 
     <div id="game-container">
+      <button id="pause-game-button" title="Pause/Resume Game (P)">❚❚</button>
       <canvas id="game"></canvas>
     </div>
 
     <div id="hud">
       <div id="hudInner">
-        <h2>Hound Digger</h2>
+        <h2>Hole Digger</h2>
         <div class="label">HP</div>
         <div class="barOuter"><div id="hpBar" class="barInner"></div></div>
         <div class="label">Lives</div><div id="lives"></div>
@@ -45,8 +71,6 @@
     </div>
   </div>
 
-  <!-- Link to your external JavaScript game logic file -->
-  <!-- Placed at the end of body so DOM elements are loaded -->
   <script src="script.js"></script>
 </body>
 </html>
