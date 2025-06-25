@@ -9,18 +9,108 @@ html, body {
 }
 *, *::before, *::after { box-sizing: border-box }
 
+/* ─── UI Pages (Landing, Restart, Pause, Graphics) ─── */
+#landing-page, #restart-page, #pause-menu, #graphics-settings-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 6, 27, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#landing-page h1, #restart-page h2, #pause-menu h2, #graphics-settings-menu h2 {
+  font-size: 3rem;
+  color: #d6c9ff;
+  text-shadow: 0 0 12px #6b5cff, 0 0 24px #6b5cff;
+  margin-bottom: 30px;
+}
+
+#landing-page button, #restart-page button, #pause-menu button, #graphics-settings-menu button {
+  background: linear-gradient(145deg,#3b2e6e,#2f254f);
+  border: 2px solid #5a4690;
+  color: #d6c9ff;
+  padding: 15px 30px;
+  font-size: 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 10px;
+  min-width: 250px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  transition: background 0.2s, transform 0.1s;
+}
+
+#landing-page button:hover, #restart-page button:hover, #pause-menu button:hover, #graphics-settings-menu button:hover {
+  background: linear-gradient(145deg,#52439a,#473b81);
+}
+
+#landing-page button:active, #restart-page button:active, #pause-menu button:active, #graphics-settings-menu button:active {
+  transform: scale(0.95);
+}
+
+#landing-page button.disabled, #restart-page button.disabled {
+  background: #2e2541;
+  color: #786a9f;
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+#finalScore {
+    font-size: 1.8rem;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+#graphics-settings-menu .setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 15px 0;
+  font-size: 1.2rem;
+  color: #c0b8dd;
+  width: 100%;
+  max-width: 400px;
+}
+#graphics-settings-menu .setting-item label {
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+#graphics-settings-menu .setting-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+#graphics-settings-menu .setting-item span {
+    font-size: 0.9rem;
+    color: #9d8dff;
+    margin-left: 5px;
+}
+
+#grid, #restart-page, #pause-menu, #graphics-settings-menu {
+  display: none;
+}
+
 /* ─── Three-column grid: auto | 420px | auto ─── */
 #grid {
-  display: grid;
   grid-template-columns:
-    auto     /* D-Pad fills to the left of the display */
-    420px    /* Game fixed size */
-    auto;    /* HUD fills to the right of the display */
+    auto
+    420px
+    auto;
   height: 100%;
   width: 100%;
 }
 
-/* ─── D-Pad ─── */
+/* ─── PAD ─── */
 #pad {
   grid-column: 1;
   width: 100%;
@@ -42,44 +132,14 @@ html, body {
     inset 0 6px 8px rgba(0,0,0,0.5);
 }
 
-/* ─── Game Container ─── */
+/* ─── GAME ─── */
 #game-container {
   grid-column: 2;
   background:#0a0625;
   display:flex; align-items:center; justify-content:center;
-  position: relative;
 }
 #game {
   width:100%; height:100%; display:block;
-}
-
-/* ─── Pause Menu ─── */
-#pause-game-button {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(46, 37, 65, 0.7);
-  border: 2px solid #5a4690;
-  color: #d6c9ff;
-  font-size: 20px;
-  line-height: 36px;
-  text-align: center;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 500;
-  transition: background-color 0.2s, transform 0.1s;
-  display: none;
-  user-select: none;
-}
-
-#pause-game-button:hover {
-  background-color: rgba(71, 59, 129, 0.9);
-}
-
-#pause-game-button:active {
-  transform: scale(0.95);
 }
 
 /* ─── HUD ─── */
@@ -103,7 +163,7 @@ html, body {
     inset 0 6px 8px rgba(0,0,0,0.5);
 }
 
-/* ─── D-Pad Buttons ─── */
+/* ─── D-PAD BUTTONS ─── */
 .pbtn {
   position: absolute;
   width:  clamp(100px, 12vw, 250px);
@@ -134,13 +194,14 @@ html, body {
 #left  { top:50%;   left:12%; transform:translateY(-50%) rotate(45deg); }
 #right { top:50%;   right:12%;transform:translateY(-50%) rotate(45deg); }
 
-/* ─── HUD (Inner) ─── */
+/* ─── HUD INNER ─── */
 #hudInner {
   position:absolute; inset:8px; padding:28px; overflow:hidden;
   background:linear-gradient(#1a1533,#110e25);
   border:4px solid rgba(76,58,144,0.8);
   box-shadow:inset 0 6px 8px rgba(0,0,0,0.5);
   height: calc(100% - 16px);
+  padding-bottom: 90px;
 }
 #hudInner h2 {
   margin:0 0 24px; text-align:center; font-size:2rem; color:#d6c9ff;
@@ -168,17 +229,72 @@ html, body {
   clip-path:polygon(50% 0,100% 40%,80% 100%,20% 100%,0 40%);
 }
 
-/* ─── Full screen canvas (Mobile) ─── */
-@media (max-width:599px){
-  #pad, #hud { display:none }
-  #grid { grid-template-columns:1fr }
-  #game-container {
-    grid-column:1; width:100vw; height:100vh;
-  }
-  #game { width:100%; height:100%; }
+#pauseGameBtn {
+    background: linear-gradient(145deg,#3b2e6e,#2f254f);
+    border: 2px solid #5a4690;
+    color: #d6c9ff;
+    padding: 12px 24px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: background 0.2s, transform 0.1s;
+    position: absolute;
+    bottom: 28px;
+    left: 28px;
+    width: calc(100% - 56px);
+}
+#pauseGameBtn:hover {
+    background: linear-gradient(145deg,#52439a,#473b81);
+}
+#pauseGameBtn:active {
+    transform: scale(0.95);
 }
 
-/* ─── Rotate device (mobile) overlay ─── */
+/* ─── Mobile: full screen canvas ─── */
+@media (max-width:599px){
+  #pad, #hud { display:none !important; }
+  #grid {
+    grid-template-columns:1fr !important;
+    display: flex !important;
+    width: 100vw;
+    height: 100vh;
+   }
+  #game-container {
+    grid-column:1 !important;
+    width:100vw !important;
+    height:100vh !important;
+  }
+  #game { width:100%; height:100%; }
+
+  #landing-page h1, #restart-page h2, #pause-menu h2, #graphics-settings-menu h2 {
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+  }
+  #landing-page button, #restart-page button, #pause-menu button, #graphics-settings-menu button {
+    font-size: 1.2rem;
+    padding: 12px 24px;
+    min-width: 200px;
+    margin: 8px;
+  }
+  #graphics-settings-menu .setting-item {
+    font-size: 1rem;
+    flex-direction: column;
+    align-items: center;
+  }
+  #graphics-settings-menu .setting-item label {
+    margin-right: 0;
+    margin-bottom: 5px;
+    text-align: center;
+    min-width: auto;
+  }
+  #graphics-settings-menu .setting-item span {
+    font-size: 0.8rem;
+    margin-top: 3px;
+  }
+}
+
+/* ─── Force-landscape overlay ─── */
 @media (orientation:portrait) and (max-width:1024px){
   body::before{
     content:"Please rotate your device";
@@ -187,80 +303,7 @@ html, body {
     display:flex;justify-content:center;align-items:center;
     font-size:7vw;z-index:999;
   }
-  #grid{ filter:blur(3px) }
-}
-
-/* ─── Overlays (Title, Pause, Game Over) ─── */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(8, 6, 27, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  color: #fff;
-  text-align: center;
-  font-family: system-ui, Arial, sans-serif;
-}
-
-.overlay-content {
-  background-color: #1a1533;
-  padding: 30px 50px;
-  border-radius: 10px;
-  border: 3px solid #4a3780;
-  box-shadow: 0 0 25px rgba(75, 58, 128, 0.8);
-  min-width: 300px;
-  max-width: 90%;
-}
-
-.overlay h1 {
-  font-size: clamp(2.5em, 5vw, 3.5em);
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #d6c9ff;
-  text-shadow:0 0 12px #6b5cff,0 0 24px #6b5cff;
-}
-
-.overlay h2 {
-  font-size: clamp(2em, 4vw, 3em);
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #d6c9ff;
-  text-shadow:0 0 10px #6b5cff,0 0 20px #6b5cff;
-}
-
-.overlay p {
-  font-size: clamp(1em, 2.5vw, 1.3em);
-  margin-bottom: 25px;
-  color: #c0b8dd;
-}
-
-.overlay button {
-  background: linear-gradient(145deg,#3b2e6e,#2f254f);
-  border: 2px solid #5a4690;
-  color: #d6c9ff;
-  padding: 12px 25px;
-  font-size: clamp(1em, 2.5vw, 1.2em);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  margin: 10px 5px;
-  text-shadow:0 0 8px #6b5cff;
-  min-width: 150px;
-}
-
-.overlay button:hover {
-  background: linear-gradient(145deg,#52439a,#473b81);
-}
-
-.overlay button:active {
-  transform: scale(0.95);
-}
-
-#pause-screen, #game-over-screen {
-  display: none;
+  #grid, #landing-page, #restart-page, #pause-menu, #graphics-settings-menu {
+     filter:blur(3px);
+  }
 }

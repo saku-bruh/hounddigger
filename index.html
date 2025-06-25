@@ -9,33 +9,38 @@
 </head>
 <body>
 
-  <!-- Title Screen -->
-  <div id="title-screen" class="overlay">
-    <div class="overlay-content">
-      <h1>Hole Digger</h1>
-      <p>Dig as deep as you can, collect hearts, and survive!</p>
-      <button id="start-button">Singleplayer</button>
-    </div>
+  <div id="landing-page">
+    <h1>Hole Digger</h1>
+    <button id="singlePlayerBtn">Singleplayer</button>
+    <button id="multiplayerBtn" class="disabled">Multiplayer (WIP)</button>
   </div>
 
-  <!-- Pause Screen -->
-  <div id="pause-screen" class="overlay">
-    <div class="overlay-content">
-      <h2>Paused</h2>
-      <button id="resume-button">Resume</button>
-      <button id="restart-button-pause">Restart</button>
-      <button id="exit-to-menu-pause">Return to the main menu</button>
-    </div>
+  <div id="restart-page">
+    <h2>Game Over</h2>
+    <p id="finalScore">Score: 0</p>
+    <button id="retryBtn">Retry</button>
+    <button id="mainMenuBtn">Main Menu</button>
   </div>
 
-  <!-- Game Over Screen -->
-  <div id="game-over-screen" class="overlay">
-    <div class="overlay-content">
-      <h2>You perished!</h2>
-      <p id="final-score">Score: 0</p>
-      <button id="restart-button-gameover">Play Again</button>
-      <button id="exit-to-menu-gameover">Return to the main menu</button>
+  <div id="pause-menu">
+    <h2>Paused</h2>
+    <button id="resumeBtn">Resume</button>
+    <button id="pauseRestartBtn">Restart</button>
+    <button id="pauseGraphicsSettingsBtn">Graphics Settings</button>
+    <button id="pauseMainMenuBtn">Main Menu</button>
+  </div>
+
+  <div id="graphics-settings-menu">
+    <h2>Graphics Settings</h2>
+    <div class="setting-item">
+      <label for="bloomToggle">Bloom Effect:</label>
+      <input type="checkbox" id="bloomToggle" checked>
     </div>
+    <div class="setting-item">
+        <label for="particlesToggle">Dig Particles:</label>
+        <input type="checkbox" id="particlesToggle" checked>
+    </div>
+    <button id="backToPauseMenuBtn">Back</button>
   </div>
 
   <div id="grid">
@@ -55,7 +60,6 @@
     </div>
 
     <div id="game-container">
-      <button id="pause-game-button" title="Pause/Resume Game (P)">❚❚</button>
       <canvas id="game"></canvas>
     </div>
 
@@ -67,6 +71,7 @@
         <div class="label">Lives</div><div id="lives"></div>
         <div class="label">Depth</div><div id="depth">0 m</div>
         <div class="label">Score</div><div id="score">0</div>
+        <button id="pauseGameBtn">Pause</button>
       </div>
     </div>
   </div>
