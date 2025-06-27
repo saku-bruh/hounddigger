@@ -6,6 +6,21 @@
   }
 })();
 
+/* ===================== Multiplayer Globals ===================== */
+let localColor  = '#fff';            // local player's ball colour
+let remoteColor = '#fff';            // remote player's ball colour
+let localWins   = 0, remoteWins = 0; // milestone win counters
+
+const mp = {
+  active:false,        // multiplayer session running?
+  isHost:false,        // am I the host?
+  conn:null,           // PeerJS DataConnection
+  remote:{             // last state received from peer
+    connected:false,
+    x:0, y:0, vy:0, hp:0
+  }
+};
+
 /* ===================== Const & Helpers ===================== */
 const TILE = 60, COLS = 7;
 const GRAV = .014;
@@ -27,7 +42,7 @@ const BLOCK_TYPES = {
     EMPTY: { id: 0, color: null, breakable: false, fallable: false, isGap: true },
     SOLID: { id: 1, color: '#4b2d7d', breakable: true, fallable: true, hp: 1 },
     HP:    { id: 2, color: '#ff5c93', breakable: false, fallable: false, isHeart: true, glow: true },
-    STONE: { id: 3, color: '#555555', breakable: true, fallable: true, hp: 1, cracks: false }, // Unused
+    STONE: { id: 3, color: '#555555', breakable: true, fallable: true, hp: 1, cracks: false },
     RED:   { id: 4, color: '#C0392B', breakable: true, fallable: true, hp: 1 },
     BLUE:  { id: 5, color: '#2980B9', breakable: true, fallable: true, hp: 1 },
     WHITE: { id: 6, color: '#ECF0F1', breakable: true, fallable: true, hp: 1, glow: true },
@@ -38,7 +53,18 @@ const BLOCK_INFO = {};
 for (const key in BLOCK_TYPES) { BLOCK_INFO[BLOCK_TYPES[key].id] = JSON.parse(JSON.stringify(BLOCK_TYPES[key])); }
 
 let graphicsSettings = { bloom: true, particles: true };
-const rnd = (a,b)=>a + Math.random()*(b-a);
+
+// --- Seeded PRNG for synchronized level generation ---
+let gameSeed = Date.now();
+function seededRandom() {
+    var t = gameSeed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+window.setGameSeed = (seed) => { gameSeed = seed; }; // Expose to multiplayer.js
+
+const rnd = (a,b)=>a + seededRandom()*(b-a);
 const rndInt = (a,b)=> Math.floor(rnd(a,b+1));
 const clamp = (v,a,b)=>v<a?a:v>b?b:v;
 
@@ -74,6 +100,10 @@ const pauseMainMenuBtn = document.getElementById('pauseMainMenuBtn'); const bloo
 const particlesToggle = document.getElementById('particlesToggle'); const backToPauseMenuBtn = document.getElementById('backToPauseMenuBtn');
 const hpBar = document.getElementById('hpBar'); const pauseGameBtn = document.getElementById('pauseGameBtn');
 const livesEl= document.getElementById('lives'); const depthEl= document.getElementById('depth'); const scoreEl= document.getElementById('score');
+
+// --- Multiplayer Rematch Screen DOM Elements ---
+const mpRematchPage = document.getElementById('mp-rematch-page');
+
 function fit(){ cv.width = cv.clientWidth; cv.height = cv.clientHeight; }
 fit(); window.addEventListener('resize',fit);
 let rows = [], digCount = 0, hearts = 0, depthOffset = 0;
@@ -102,7 +132,8 @@ document.querySelectorAll('.pbtn').forEach(btn => {
 /* ===================== UI Management ===================== */
 function updateUIVisibility() {
     landingPage.style.display = currentGameState === GAME_STATE.LANDING ? 'flex' : 'none';
-    restartPage.style.display = currentGameState === GAME_STATE.GAME_OVER ? 'flex' : 'none';
+    restartPage.style.display = (currentGameState === GAME_STATE.GAME_OVER && !mp.active) ? 'flex' : 'none';
+    mpRematchPage.style.display = (currentGameState === GAME_STATE.GAME_OVER && mp.active) ? 'flex' : 'none';
     pauseMenu.style.display = currentGameState === GAME_STATE.PAUSED ? 'flex' : 'none';
     graphicsSettingsMenu.style.display = currentGameState === GAME_STATE.GRAPHICS_MENU ? 'flex' : 'none';
     gameGrid.style.display = (currentGameState === GAME_STATE.PLAYING || currentGameState === GAME_STATE.PAUSED || currentGameState === GAME_STATE.GRAPHICS_MENU) ? 'grid' : 'none';
@@ -112,6 +143,11 @@ function updateUIVisibility() {
 }
 function showLandingPage() { currentGameState = GAME_STATE.LANDING; updateUIVisibility(); }
 function startGameFlow(event) {
+    // FIX #1: Clean up any multiplayer connection before starting single-player
+    if (mp.active && window.disconnectMultiplayer) {
+        window.disconnectMultiplayer();
+    }
+
     const button = event.target;
     button.classList.add('breaking');
     setTimeout(() => {
@@ -177,12 +213,12 @@ const makeRow = (rowIndex) => {
     const currentDepth = rowIndex + depthOffset;
 
     for (let x = 0; x < COLS; x++) {
-        const rand = Math.random();
+        const rand = seededRandom();
         const blockAbove = getBlock(x, rowIndex - 1);
-        const continueVerticalCluster = blockAbove && blockAbove.typeId !== baseBlock.typeId && blockAbove.typeId !== BLOCK_TYPES.HP.id && blockAbove.typeId !== BLOCK_TYPES.SOUL.id && Math.random() < 0.6;
+        const continueVerticalCluster = blockAbove && blockAbove.typeId !== baseBlock.typeId && blockAbove.typeId !== BLOCK_TYPES.HP.id && blockAbove.typeId !== BLOCK_TYPES.SOUL.id && seededRandom() < 0.6;
         if (continueVerticalCluster && BLOCK_INFO[blockAbove.typeId].breakable) {
             newRow[x] = { typeId: blockAbove.typeId, hp: BLOCK_INFO[blockAbove.typeId].hp };
-        } else if (lastTypeId && lastTypeId !== baseBlock.typeId && lastTypeId !== BLOCK_TYPES.HP.id && lastTypeId !== BLOCK_TYPES.SOUL.id && Math.random() < 0.5) {
+        } else if (lastTypeId && lastTypeId !== baseBlock.typeId && lastTypeId !== BLOCK_TYPES.HP.id && lastTypeId !== BLOCK_TYPES.SOUL.id && seededRandom() < 0.5) {
             newRow[x] = { typeId: lastTypeId, hp: BLOCK_INFO[lastTypeId].hp };
         } else {
             if (rand < HEART_RATE && currentDepth > 5) {
@@ -190,7 +226,7 @@ const makeRow = (rowIndex) => {
             } else if (rand < (HEART_RATE + 0.04 + currentDepth * 0.00025) && currentDepth > SOUL_BLOCK_MIN_DEPTH) {
                 newRow[x] = { typeId: BLOCK_TYPES.SOUL.id, hp: BLOCK_TYPES.SOUL.hp };
             } else {
-                const blockTypeRand = Math.random();
+                const blockTypeRand = seededRandom();
                 if (blockTypeRand < 0.45) newRow[x] = { ...baseBlock };
                 else if (blockTypeRand < 0.65) newRow[x] = { typeId: BLOCK_TYPES.RED.id, hp: 1 };
                 else if (blockTypeRand < 0.85) newRow[x] = { typeId: BLOCK_TYPES.BLUE.id, hp: 1 };
@@ -248,6 +284,9 @@ function resetWorld(){
   msState = null;
 }
 function startGame() {
+    if (!mp.active) {
+        window.setGameSeed(Date.now()); // Use a new random seed for single-player
+    }
     resetWorld();
     for (let i = 0; i < 120; i++) ensureRow(i);
     updateHUD();
@@ -256,7 +295,7 @@ const ensureRow = (rowIndex) => {
     while (rowIndex >= rows.length) {
         let newRowInternalIndex = rows.length; rows.push(makeRow(newRowInternalIndex));
         const totalDepth = newRowInternalIndex + depthOffset;
-        if (totalDepth >= IRON_CHUNK_MIN_DEPTH && totalDepth < nextMilestonePhysicalY && newRowInternalIndex > lastIronChunkEndRow + IRON_CHUNK_MIN_GAP_BETWEEN && (totalDepth % IRON_CHUNK_INTERVAL === 0 || (totalDepth % IRON_CHUNK_INTERVAL > 0 && Math.random() < 0.05))) {
+        if (totalDepth >= IRON_CHUNK_MIN_DEPTH && totalDepth < nextMilestonePhysicalY && newRowInternalIndex > lastIronChunkEndRow + IRON_CHUNK_MIN_GAP_BETWEEN && (totalDepth % IRON_CHUNK_INTERVAL === 0 || (totalDepth % IRON_CHUNK_INTERVAL > 0 && seededRandom() < 0.05))) {
             placeIronChunk(newRowInternalIndex);
         }
     }
@@ -302,6 +341,7 @@ function findConnectedBlocks(startX, startY) {
 }
 
 /* ===================== Input Handler ===================== */
+// FIX #3: Replaced jump with climb mechanic
 function handleInput(ts) {
     if (ts < digLock || breaking.length > 0) return;
 
@@ -310,29 +350,48 @@ function handleInput(ts) {
     const U = key['w'] || key.ArrowUp;
     const D = key['s'] || key.ArrowDown;
     const grounded = onGround();
-    const isBlockFalling = fallers.length > 0;
-    let dx = 0, dy = 0;
+    
+    let dx = 0;
+    if (L) dx = -1;
+    else if (R) dx = 1;
 
-    if (grounded || isBlockFalling) {
-        if (L) dx = -1;
-        else if (R) dx = 1;
+    // --- CLIMBING LOGIC ---
+    if (U && dx !== 0 && grounded) {
+        const nextX = player.x + dx;
+        const currentY = Math.round(player.y);
+
+        const wallBlockInfo = getBlockInfo(nextX, currentY);
+        const spaceAboveWallInfo = getBlockInfo(nextX, currentY - 1);
+        const spaceAbovePlayerInfo = getBlockInfo(player.x, currentY - 1);
+
+        if (!wallBlockInfo.isGap && spaceAboveWallInfo.isGap && spaceAbovePlayerInfo.isGap) {
+            player.x = nextX;
+            player.y -= 1; // Move up one block
+            player.vy = 0;
+            digLock = ts + HORIZ_CD * 1.5;
+            playSound('jump'); // Using 'jump' sound for climbing
+            return; // End input processing for this frame
+        }
     }
 
+    // --- DIGGING & HORIZONTAL MOVEMENT ---
+    let dy = 0;
     if (D) dy = 1;
-    else if (U && grounded) { dy = -1; playSound('jump'); }
-    
+
+    // Prevent mid-air horizontal movement unless also digging down
+    if (!grounded && dy === 0) {
+        dx = 0;
+    }
+
     if (!dx && !dy) return;
 
     const tx = clamp(player.x + dx, 0, COLS - 1);
     const ty = Math.max(0, player.y + dy);
     ensureRow(ty);
 
-    if (dx !== 0) {
-        const playerGridY = Math.round(player.y);
-        const isBlockedByFaller = fallers.some(f => f.x === tx && Math.round(f.y) === playerGridY);
-        if (isBlockedByFaller) return;
-    }
-
+    const isBlockedByFaller = fallers.some(f => f.x === tx && Math.round(f.y) === ty);
+    if (isBlockedByFaller) return;
+    
     const fallerIndex = fallers.findIndex(f => f.x === tx && Math.round(f.y) === ty);
     let targetBlock = (fallerIndex > -1) ? fallers[fallerIndex] : getBlock(tx, ty);
     
@@ -349,6 +408,7 @@ function handleInput(ts) {
         digLock = ts + (dy === 1 ? DIG_CD * 0.2 : HORIZ_CD);
         return;
     }
+
     if (targetBlockInfo.breakable) {
         if (dy === 1 && player.vy > 0.5) player.vy *= 0.5;
         if (fallerIndex > -1) fallers.splice(fallerIndex, 1);
@@ -403,6 +463,7 @@ function handleInput(ts) {
         playSound('respawn');
     }
 }
+
 
 /* ===================== Game Logic ===================== */
 const onGround = ()=> {
@@ -513,6 +574,15 @@ function update(ts, dt){
   camY += ((player.y+0.5)*TILE - camY - cv.height*0.4)*0.1; ensureRow(Math.floor((camY+cv.height)/TILE) + 30);
   dust = dust.filter(d=> { d.life--; if (d.life <=0) return false; d.x+=d.vx; d.y+=d.vy; d.vy+=0.1; if(d.alpha) d.alpha = Math.max(0, d.alpha - 0.02); return true; });
   updateHUD();
+
+  /* ==== Multiplayer: send my state each frame ================= */
+  if (mp.active && mp.conn && mp.conn.open){
+    mp.conn.send({
+      t:'s',
+      x:player.x, y:player.y, vy:player.vy,
+      hp:player.hp, depth:depthOffset
+    });
+  }
 }
 function updateHUD(){
   if (!hpBar || !livesEl || !depthEl || !scoreEl) return; hpBar.style.width = clamp(player.hp/HP_MAX*100, 0, 100)+'%';
@@ -520,11 +590,25 @@ function updateHUD(){
   depthEl.textContent = Math.max(0, Math.floor(player.y + depthOffset)) +' m';
   scoreEl.textContent = calcScore();
 }
+
+// FIX #4: Trigger multiplayer game over screen
 function loseLife(tsNow){
     player.lives--;
     playSound('death');
     updateHUD();
-    if (player.lives <= 0){ showRestartPage(); return; }
+    if (player.lives <= 0){
+        if (mp.active && mp.conn && mp.conn.open) {
+            // This is a multiplayer game, trigger the rematch screen for both players
+            currentGameState = GAME_STATE.GAME_OVER;
+            mp.conn.send({t: 'gg'}); // Inform other player they lost
+            window.showMpRematchPage(calcScore()); // Show local rematch screen
+        } else {
+            // This is a single-player game
+            showRestartPage();
+        }
+        return;
+    }
+    // Respawn logic if lives > 0
     const deathX = player.x;
     const deathY = Math.round(player.y);
     setBlock(deathX, deathY, BLOCK_TYPES.EMPTY.id);
@@ -536,6 +620,7 @@ function loseLife(tsNow){
     playSound('respawn');
     fallers = fallers.filter(f => !(f.x === deathX && (Math.round(f.y) === deathY || Math.round(f.y) === deathY + 1)));
 }
+
 const queueFall = (x,y, typeIdToFall)=>{
   if (msState || y<0||!rows[y] || player.deathAnim) return;
   const block = getBlock(x,y); if (!block || block.typeId !== typeIdToFall) return;
@@ -606,6 +691,14 @@ function finishMilestone() {
     nextMilestonePhysicalY += MILESTONE_INTERVAL;
     const milestoneLevel = (depthOffset / MILESTONE_INTERVAL) + 1;
     updateStoneTypeForNewLevel(milestoneLevel);
+
+    /* ===== decide winner (host authoritative) ===== */
+    if (mp.active && mp.isHost && mp.conn && mp.conn.open){
+      const hostWon = player.y <= mp.remote.y;
+      if (hostWon) localWins++; else remoteWins++;
+      mp.conn.send({t:'w', local:localWins, remote:remoteWins});
+    }
+
     player.y = 0;
     player.vy = 0;
     camY = 0;
@@ -655,14 +748,22 @@ function render(ts){
       } ctx.restore();
     });
     dust.forEach(d=>{ ctx.globalAlpha = d.alpha !== undefined ? d.alpha : d.life/40; ctx.fillStyle = d.color || '#c8b27d'; const sz = d.size || 6; ctx.fillRect(d.x-sz/2, d.y-sz/2, sz, sz); }); ctx.globalAlpha = 1;
+
+    /* ---- player dots ---- */
     ctx.save();
     const R = 20 * (TILE/60);
     const px = player.x*TILE + TILE/2, py = player.y*TILE + TILE/2 + TILE/6;
-    let drawPlayer = true;
+    let drawLocal = true;
     if (ts < player.invincibleUntil) {
-        if ((ts - (player.invincibleUntil - 4000)) % 150 > 75) drawPlayer = false;
+        if ((ts - (player.invincibleUntil - 4000)) % 150 > 75) drawLocal = false;
     }
-    if (drawPlayer) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, py, R, 0, 2*Math.PI); ctx.fill(); }
+    if (drawLocal) { ctx.fillStyle = localColor; ctx.beginPath(); ctx.arc(px, py, R, 0, 2*Math.PI); ctx.fill(); }
+
+    if (mp.remote.connected) {
+        const rx = mp.remote.x*TILE + TILE/2, ry = mp.remote.y*TILE + TILE/2 + TILE/6;
+        ctx.fillStyle = remoteColor;
+        ctx.beginPath(); ctx.arc(rx, ry, R, 0, 2*Math.PI); ctx.fill();
+    }
     ctx.restore();
     ctx.restore();
   }

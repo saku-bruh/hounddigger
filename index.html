@@ -4,16 +4,53 @@
   <meta charset="UTF-8" />
   <title>Hole Digger</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- PeerJS (one-liner → free public signalling) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.5/peerjs.min.js"></script>
 </head>
 <body>
 
+  <!-- ── Landing ──────────────────────────────────────────────── -->
   <div id="landing-page">
     <h1>Hole Digger</h1>
     <button id="singlePlayerBtn">Singleplayer</button>
-    <button id="multiplayerBtn" class="disabled">Multiplayer (WIP)</button>
+    <button id="multiplayerBtn">Multiplayer</button>
   </div>
 
+  <!-- ── Multiplayer ─────────────────────────────────────── -->
+  <div id="mp-lobby">
+    <h2>Multiplayer</h2>
+
+    <div id="hostPane">
+      <button id="hostBtn">Host game</button>
+      <p id="hostCode" class="code"></p>
+    </div>
+
+    <div id="joinPane">
+      <input id="joinCode" placeholder="Paste code and hit Join">
+      <button id="joinBtn">Join</button>
+    </div>
+
+    <div id="readyPane">
+      <p id="readyStatus">Waiting…</p>
+      <button id="readyBtn">Ready</button>
+    </div>
+
+    <button id="lobbyBackBtn">Back</button>
+  </div>
+
+  <div id="mp-rematch-page">
+      <h2>Game Over</h2>
+      <p id="mp-final-score">Score: 0</p>
+      <p id="rematch-status">Waiting for opponent...</p>
+      <button id="rematchBtn">Play Again</button>
+      <button id="quitBtn">Quit to Title</button>
+  </div>
+
+  <!-- ── Game over / pause / graphics menus (unchanged) ────────── -->
   <div id="restart-page">
     <h2>Game Over</h2>
     <p id="finalScore">Score: 0</p>
@@ -36,12 +73,13 @@
       <input type="checkbox" id="bloomToggle" checked>
     </div>
     <div class="setting-item">
-        <label for="particlesToggle">Dig Particles:</label>
-        <input type="checkbox" id="particlesToggle" checked>
+      <label for="particlesToggle">Dig Particles:</label>
+      <input type="checkbox" id="particlesToggle" checked>
     </div>
     <button id="backToPauseMenuBtn">Back</button>
   </div>
 
+  <!-- ── Main grid (pad · canvas · HUD) ────────────────────────── -->
   <div id="grid">
     <div id="pad">
       <div id="up"   class="pbtn" data-k="ArrowUp">
@@ -75,6 +113,9 @@
     </div>
   </div>
 
+  <!-- ── Scripts ──────────────────────────────────────────────── -->
   <script src="script.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <script src="multiplayer.js"></script>
 </body>
 </html>
