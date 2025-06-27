@@ -1,11 +1,3 @@
-/* ===================== Mobile Detection ===================== */
-(function(){
-  const ua = navigator.userAgent || '';
-  if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) {
-    document.body.classList.add('mobile-zoom');
-  }
-})();
-
 /* ===================== Multiplayer Globals ===================== */
 let localColor  = '#fff';
 let remoteColor = '#fff';
@@ -54,7 +46,6 @@ for (const key in BLOCK_TYPES) { BLOCK_INFO[BLOCK_TYPES[key].id] = JSON.parse(JS
 
 let graphicsSettings = { bloom: true, particles: true };
 
-// --- Seeded PRNG for synchronized level generation ---
 let gameSeed = Date.now();
 function seededRandom() {
     var t = gameSeed += 0x6D2B79F5;
@@ -100,8 +91,6 @@ const pauseMainMenuBtn = document.getElementById('pauseMainMenuBtn'); const bloo
 const particlesToggle = document.getElementById('particlesToggle'); const backToPauseMenuBtn = document.getElementById('backToPauseMenuBtn');
 const hpBar = document.getElementById('hpBar'); const pauseGameBtn = document.getElementById('pauseGameBtn');
 const livesEl= document.getElementById('lives'); const depthEl= document.getElementById('depth'); const scoreEl= document.getElementById('score');
-
-// --- Multiplayer Rematch Screen DOM Elements ---
 const mpRematchPage = document.getElementById('mp-rematch-page');
 
 function fit(){ cv.width = cv.clientWidth; cv.height = cv.clientHeight; }
@@ -353,7 +342,6 @@ function handleInput(ts) {
     if (L) dx = -1;
     else if (R) dx = 1;
 
-    // --- Block Climbing ---
     if (U && dx !== 0 && grounded) {
         const nextX = player.x + dx;
         const currentY = Math.round(player.y);
@@ -372,7 +360,6 @@ function handleInput(ts) {
         }
     }
 
-    // --- Digging/Horizontal Moment ---
     let dy = 0;
     if (D) dy = 1;
 
@@ -567,7 +554,6 @@ function update(ts, dt){
   dust = dust.filter(d=> { d.life--; if (d.life <=0) return false; d.x+=d.vx; d.y+=d.vy; d.vy+=0.1; if(d.alpha) d.alpha = Math.max(0, d.alpha - 0.02); return true; });
   updateHUD();
 
-  /* ==== Multiplayer: send my state each frame ================= */
   if (mp.active && mp.conn && mp.conn.open){
     mp.conn.send({
       t:'s',
@@ -758,7 +744,6 @@ function render(ts){
     });
     dust.forEach(d=>{ ctx.globalAlpha = d.alpha !== undefined ? d.alpha : d.life/40; ctx.fillStyle = d.color || '#c8b27d'; const sz = d.size || 6; ctx.fillRect(d.x-sz/2, d.y-sz/2, sz, sz); }); ctx.globalAlpha = 1;
 
-    /* ---- player dots ---- */
     ctx.save();
     const R = 20 * (TILE/60);
     const px = player.x*TILE + TILE/2, py = player.y*TILE + TILE/2 + TILE/6;
@@ -807,3 +792,18 @@ function render(ts){
 }
 
 updateUIVisibility();
+
+function applyMobileZoom() {
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    const targetWidth = 1600;
+    const zoomLevel = window.innerWidth / targetWidth;
+    document.body.style.zoom = zoomLevel;
+  } else {
+    document.body.style.zoom = 1;
+  }
+}
+
+window.addEventListener('load', applyMobileZoom);
+window.addEventListener('resize', applyMobileZoom);

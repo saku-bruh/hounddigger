@@ -8,10 +8,6 @@ html, body {
 }
 *, *::before, *::after { box-sizing: border-box }
 
-body.mobile-zoom {
-    zoom: 200%;
-}
-
 #landing-page, #restart-page, #pause-menu, #graphics-settings-menu {
   position: fixed;
   top: 0;
@@ -251,7 +247,6 @@ body.mobile-zoom {
     transform: scale(0.95);
 }
 
-/* ── Multiplayer lobby overlay ───────────────────────────────── */
 #mp-lobby{
   position:fixed; inset:0;
   background:rgba(8,6,27,.95);
@@ -334,7 +329,6 @@ body.mobile-zoom {
     min-width: auto !important;
 }
 
-/* ── Multiplayer Rematch Screen ────────────────────────────── */
 #mp-rematch-page {
     position: fixed;
     top: 0;
@@ -383,11 +377,6 @@ body.mobile-zoom {
     cursor: not-allowed;
 }
 
-/* ================================================================== */
-/* ── Mobile & Tablet Responsive Fixes ────────────────────────────── */
-/* ================================================================== */
-
-/* For smaller phones where any extra UI is too much */
 @media (max-width: 699px) {
   #pad, #hud { display:none !important; }
   #grid {
@@ -398,7 +387,6 @@ body.mobile-zoom {
   }
 }
 
-/* For tablets and wider phones in landscape */
 @media (max-width: 1024px) {
     #pad { display: none !important; }
 
@@ -434,7 +422,6 @@ body.mobile-zoom {
     #pauseGameBtn { padding: 10px; font-size: 1rem; }
 }
 
-/* "Please rotate" message for portrait mobile */
 @media (orientation:portrait) and (max-width:1024px){
   body::before{
     content:"Please rotate your device";
