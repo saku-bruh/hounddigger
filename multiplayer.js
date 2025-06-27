@@ -1,5 +1,4 @@
 (() => {
-  // Peer configuration (STUN/TURN)
   const peerOptions = {
     config: {
       iceServers: [
@@ -13,33 +12,34 @@
     debug: 2
   };
 
-  // DOM handles --------------------------------------------------
-  const lobby      = document.getElementById('mp-lobby');
-  const hostBtn    = document.getElementById('hostBtn');
-  const joinBtn    = document.getElementById('joinBtn');
-  const readyBtn   = document.getElementById('readyBtn');
-  const backBtn    = document.getElementById('lobbyBackBtn');
-  const hostCodeEl = document.getElementById('hostCode');
-  const joinInput  = document.getElementById('joinCode');
-  const readyTxt   = document.getElementById('readyStatus');
-  const hostPane   = document.getElementById('hostPane');
-  const joinPane   = document.getElementById('joinPane');
-  const readyPane  = document.getElementById('readyPane');
+  const lobby        = document.getElementById('mp-lobby');
+  const hostBtn      = document.getElementById('hostBtn');
+  const joinBtn      = document.getElementById('joinBtn');
+  const readyBtn     = document.getElementById('readyBtn');
+  const backBtn      = document.getElementById('lobbyBackBtn');
+  const joinInput    = document.getElementById('joinCode');
+  const readyTxt     = document.getElementById('readyStatus');
+  const joinPane     = document.getElementById('joinPane');
+  const readyPane    = document.getElementById('readyPane');
+  const hostInfoDiv  = document.getElementById('host-info');
+  const hostCodeEl   = document.getElementById('hostCode');
+  const copyCodeBtn  = document.getElementById('copyCodeBtn');
+  const clearCodeBtn = document.getElementById('clearCodeBtn');
+  const pasteCodeBtn = document.getElementById('pasteCodeBtn');
 
-  // --- NEW DOM HANDLES FOR REMATCH ---
-  const rematchPage     = document.getElementById('mp-rematch-page');
-  const rematchBtn      = document.getElementById('rematchBtn');
-  const quitBtn         = document.getElementById('quitBtn');
-  const mpFinalScoreEl  = document.getElementById('mp-final-score');
-  const rematchStatusEl = document.getElementById('rematch-status');
+  const rematchPage       = document.getElementById('mp-rematch-page');
+  const rematchBtn        = document.getElementById('rematchBtn');
+  const quitBtn           = document.getElementById('quitBtn');
+  const mpFinalScoreEl    = document.getElementById('mp-final-score');
+  const rematchStatusEl   = document.getElementById('rematch-status');
+  
+  joinInput.value = '';
 
   let peer;
   let bothReady = false;
-  // --- NEW STATE FOR REMATCH ---
   let localRematchReady  = false;
   let remoteRematchReady = false;
 
-  // --- FUNCTION TO CLEAN UP MP SESSION ---
   window.disconnectMultiplayer = () => {
     if (mp.conn) {
       mp.conn.send({ t: 'leave' });
@@ -52,45 +52,77 @@
     console.log("Multiplayer session disconnected.");
   };
 
-  // --------------------------------------------------------------
-  // Landing → open lobby
   document.getElementById('multiplayerBtn').onclick = () => {
-    // Reset lobby state when opening it
-    readyBtn.disabled     = false;
-    readyTxt.textContent  = 'Waiting…';
+    readyBtn.disabled       = false;
+    readyTxt.textContent    = 'Waiting…';
     readyPane.style.display = 'none';
-    hostPane.style.display  = 'block';
     hostBtn.style.display   = 'block';
+    hostInfoDiv.style.display = 'none';
+    copyCodeBtn.textContent = 'Copy';
     hostCodeEl.textContent  = '';
-    joinPane.style.display  = 'block';
+    joinPane.style.display  = 'flex';
     mp.localReady  = false;
     mp.remoteReady = false;
     bothReady = false;
-    lobby.style.display    = 'flex';
+    lobby.style.display       = 'flex';
     landingPage.style.display = 'none';
   };
 
-  // Lobby back / reset ------------------------------------------
   backBtn.onclick = () => {
     window.disconnectMultiplayer();
     lobby.style.display = 'none';
+    hostInfoDiv.style.display = 'none';
+    copyCodeBtn.textContent = 'Copy';
     showLandingPage();
   };
 
-  // --------------------------- HOST -----------------------------
   hostBtn.onclick = () => {
     mp.isHost = true;
     peer = new Peer(undefined, peerOptions);
-    peer.on('open', id => { hostCodeEl.textContent = `Share code: ${id}`; });
+    peer.on('open', id => {
+        hostCodeEl.textContent = id;
+        hostCodeEl.dataset.code = id;
+        hostInfoDiv.style.display = 'flex';
+    });
     peer.on('connection', c => { mp.conn = c; setupConn(); });
 
-    // UI visibility fixes
     hostBtn.style.display   = 'none';
     joinPane.style.display  = 'none';
     readyPane.style.display = 'block';
   };
 
-  // --------------------------- GUEST ----------------------------
+  copyCodeBtn.onclick = () => {
+    const code = hostCodeEl.dataset.code;
+    if (!code) return;
+
+    navigator.clipboard.writeText(code).then(() => {
+        copyCodeBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyCodeBtn.textContent = 'Copy';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy code: ', err);
+        alert('Failed to copy. Please select the code and copy it manually.');
+    });
+  };
+
+  clearCodeBtn.onclick = () => {
+    joinInput.value = '';
+    joinInput.focus();
+  };
+  
+  pasteCodeBtn.onclick = async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          joinInput.value = text.trim();
+        }
+      } catch (err) {
+        console.error('Failed to read clipboard contents: ', err);
+        alert('Could not paste from clipboard. Please paste it manually.');
+      }
+  };
+
   joinBtn.onclick = () => {
     const code = joinInput.value.trim();
     if (!code) return alert('Enter a code first');
@@ -101,25 +133,24 @@
       mp.conn.on('open', setupConn);
     });
 
-    hostPane.style.display  = 'none';
+    hostBtn.style.display  = 'none';
+    hostInfoDiv.style.display = 'none';
     joinPane.style.display  = 'none';
     readyPane.style.display = 'block';
   };
 
-  // Ready pane ---------------------------------------------------
   readyBtn.onclick = () => {
-    readyBtn.disabled    = true;
+    readyBtn.disabled      = true;
     readyTxt.textContent = 'Waiting for other player…';
     mp.localReady = true;
     if (mp.conn && mp.conn.open) mp.conn.send({ t: 'r' });
     checkStart();
   };
 
-  // --------------------------------------------------------------
   function setupConn() {
-    mp.active             = true;
-    mp.remote.connected   = true;
-    readyTxt.textContent  = 'Opponent connected! Ready up!';
+    mp.active            = true;
+    mp.remote.connected  = true;
+    readyTxt.textContent = 'Opponent connected! Ready up!';
 
     mp.conn.on('data', msg => {
       switch (msg.t) {
@@ -134,6 +165,19 @@
         case 'w':
           localWins = msg.remote; remoteWins = msg.local;
           break;
+        case 'life_lost':
+            if (mp.isHost) {
+                localWins++;
+                if (mp.conn && mp.conn.open) {
+                    mp.conn.send({t:'w', local:localWins, remote:remoteWins});
+                }
+            }
+            break;
+        case 'milestone_crossed':
+            if (!mp.isHost) {
+                startMilestone(performance.now());
+            }
+            break;
         case 'go':
           if (!mp.isHost) {
             window.setGameSeed(msg.seed);
@@ -145,8 +189,7 @@
           break;
         case 'gg':
           currentGameState = GAME_STATE.GAME_OVER;
-          showMpRematchPage(calcScore());
-          updateUIVisibility();
+          showMpRematchPage(calcScore(), true);
           break;
         case 'rematch_r':
           remoteRematchReady = true;
@@ -185,10 +228,11 @@
     });
   }
 
-  // --------------------------------------------------------------
   function checkStart() {
     if (!bothReady && mp.localReady && mp.remoteReady) {
       bothReady = true;
+      localWins = 0;
+      remoteWins = 0;
       if (mp.isHost) {
         const seed = Date.now();
         window.setGameSeed(seed);
@@ -204,9 +248,20 @@
     }
   }
 
-  // --- FUNCTIONS FOR REMATCH ---
-  function showMpRematchPage(finalScore) {
-    currentGameState       = GAME_STATE.GAME_OVER;
+  function showMpRematchPage(finalScore, didWin) {
+    currentGameState = GAME_STATE.GAME_OVER;
+    
+    const titleEl = document.getElementById('mp-game-over-title');
+    if (titleEl) {
+        if (didWin) {
+            titleEl.textContent = "You Win!";
+            titleEl.style.color = '#82ffa0';
+        } else {
+            titleEl.textContent = "You Lose!";
+            titleEl.style.color = '#ff5c93';
+        }
+    }
+
     mpFinalScoreEl.textContent = `Final Score: ${finalScore}`;
     localRematchReady      = false;
     remoteRematchReady     = false;
@@ -233,6 +288,8 @@
 
   function checkRematch() {
     if (localRematchReady && remoteRematchReady) {
+      localWins = 0;
+      remoteWins = 0;
       if (mp.isHost) {
         const newSeed = Date.now();
         window.setGameSeed(newSeed);

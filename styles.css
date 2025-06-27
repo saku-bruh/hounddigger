@@ -191,7 +191,7 @@ body.mobile-zoom {
 #right { top:50%;   right:12%;transform:translateY(-50%) rotate(45deg); }
 
 #hudInner {
-  position:absolute; inset:8px; padding:28px; overflow:hidden;
+  position:absolute; inset:8px; padding:28px; overflow-y:auto;
   background:linear-gradient(#1a1533,#110e25);
   border:4px solid rgba(76,58,144,0.8);
   box-shadow:inset 0 6px 8px rgba(0,0,0,0.5);
@@ -203,21 +203,26 @@ body.mobile-zoom {
   text-shadow:0 0 12px #6b5cff,0 0 24px #6b5cff;
 }
 .label {
-  font-size:1.1rem; margin:0 0 12px; text-transform:uppercase;
+  font-size:1.1rem; margin:12px 0; text-transform:uppercase;
   letter-spacing:.5px; color:#9d8dff;
   text-shadow:0 0 8px #6b5cff,0 0 16px #6b5cff;
 }
 .barOuter {
   width:100%; height:28px; border:1px solid #888;
-  border-radius:4px; overflow:hidden; margin-bottom:24px;
+  border-radius:4px; overflow:hidden;
 }
 .barInner { height:100%; background:#e648a5 }
 
-#lives { margin-bottom:32px }
-#depth,#score {
-  margin-bottom:32px; font-size:2rem; color:#ddd;
+#lives { margin-bottom:12px }
+#depth,#score, #wins-counter {
+  margin-bottom:12px; font-size:2rem; color:#ddd;
   text-shadow:0 0 6px #6b5cff,0 0 12px #6b5cff;
 }
+
+#wins-counter {
+    font-size: 1.5rem;
+}
+
 #lives span {
   display:inline-block; width:28px; height:28px; margin-right:8px;
   background:#e648a5;
@@ -246,188 +251,6 @@ body.mobile-zoom {
     transform: scale(0.95);
 }
 
-#multiplayer-menu, #multiplayer-host-lobby, #multiplayer-join-lobby {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(8, 6, 27, 0.95);
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-  text-align: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-#multiplayer-menu h2, #multiplayer-host-lobby h2, #multiplayer-join-lobby h2 {
-  font-size: 2.5rem;
-  color: #d6c9ff;
-  text-shadow: 0 0 12px #6b5cff, 0 0 24px #6b5cff;
-  margin-bottom: 25px;
-}
-
-#multiplayer-menu button, #multiplayer-host-lobby button, #multiplayer-join-lobby button {
-  background: linear-gradient(145deg,#3b2e6e,#2f254f);
-  border: 2px solid #5a4690;
-  color: #d6c9ff;
-  padding: 12px 25px;
-  font-size: 1.3rem;
-  border-radius: 8px;
-  cursor: pointer;
-  margin: 8px;
-  min-width: 220px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  transition: background 0.2s, transform 0.1s;
-}
-
-#multiplayer-menu button:hover, #multiplayer-host-lobby button:hover, #multiplayer-join-lobby button:hover {
-  background: linear-gradient(145deg,#52439a,#473b81);
-}
-
-#multiplayer-menu button:active, #multiplayer-host-lobby button:active, #multiplayer-join-lobby button:active {
-  transform: scale(0.95);
-}
-
-#multiplayer-host-lobby button.disabled, #multiplayer-join-lobby button.disabled,
-#hostReadyBtn.disabled, #guestReadyBtn.disabled {
-    background: #2e2541;
-    color: #786a9f;
-    cursor: not-allowed;
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-#gameCodeDisplay {
-  font-size: 1.8em;
-  font-weight: bold;
-  margin: 10px 0 20px 0;
-  color: #82ffa0;
-  background-color: #1c163a;
-  padding: 8px 15px;
-  border-radius: 5px;
-  border: 1px solid #5a4690;
-  display: inline-block;
-}
-
-#joinGameCodeInput {
-  padding: 12px;
-  font-size: 1.3rem;
-  margin-bottom: 15px;
-  width: 280px;
-  text-align: center;
-  background-color: #1c163a;
-  border: 1px solid #5a4690;
-  color: #d6c9ff;
-  border-radius: 5px;
-}
-
-#hostLobbyStatus, #joinLobbyStatus,
-#ready-status-host p, #ready-status-guest p {
-  font-size: 1.1rem;
-  color: #c0b8dd;
-  margin: 5px 0;
-}
-#ready-status-host, #ready-status-guest {
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px dashed #5a4690;
-    border-radius: 5px;
-    background-color: rgba(46, 37, 65, 0.5);
-}
-
-#multiplayer-hud-info {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
-  background: rgba(8, 6, 27, 0.7);
-  color: #d6c9ff;
-  padding: 8px 12px;
-  border-radius: 5px;
-  border: 1px solid #4a3780;
-  font-size: 0.9rem;
-  text-align: center;
-}
-#multiplayer-hud-info p {
-  margin: 2px 0;
-}
-
-@media (max-width:599px){
-  #pad, #hud { display:none !important; }
-  #grid {
-    grid-template-columns:1fr !important;
-    display: flex !important;
-    width: 100vw;
-    height: 100vh;
-   }
-  #game-container {
-    grid-column:1 !important;
-    width:100vw !important;
-    height:100vh !important;
-  }
-  #game { width:100%; height:100%; }
-
-  #landing-page h1, #restart-page h2, #pause-menu h2, #graphics-settings-menu h2 {
-    font-size: 2.2rem;
-    margin-bottom: 20px;
-  }
-  #landing-page button, #restart-page button, #pause-menu button, #graphics-settings-menu button {
-    font-size: 1.2rem;
-    padding: 12px 24px;
-    min-width: 200px;
-    margin: 8px;
-  }
-  #graphics-settings-menu .setting-item {
-    font-size: 1rem;
-    flex-direction: column;
-    align-items: center;
-  }
-  #graphics-settings-menu .setting-item label {
-    margin-right: 0;
-    margin-bottom: 5px;
-    text-align: center;
-    min-width: auto;
-  }
-  #graphics-settings-menu .setting-item span {
-    font-size: 0.8rem;
-    margin-top: 3px;
-  }
-  #multiplayer-menu h2, #multiplayer-host-lobby h2, #multiplayer-join-lobby h2 {
-    font-size: 1.8rem;
-    margin-bottom: 15px;
-  }
-  #multiplayer-menu button, #multiplayer-host-lobby button, #multiplayer-join-lobby button {
-    font-size: 1rem;
-    padding: 10px 20px;
-    min-width: 180px;
-  }
-  #joinGameCodeInput {
-    font-size: 1.1rem;
-    width: 220px;
-  }
-  #gameCodeDisplay {
-    font-size: 1.5em;
-  }
-}
-
-@media (orientation:portrait) and (max-width:1024px){
-  body::before{
-    content:"Please rotate your device";
-    position:fixed; inset:0;
-    background:rgba(0,0,0,0.85);
-    display:flex;justify-content:center;align-items:center;
-    font-size:7vw;z-index:999;
-  }
-  #grid, #landing-page, #restart-page, #pause-menu, #graphics-settings-menu {
-     filter:blur(3px);
-  }
-}
-
 /* ── Multiplayer lobby overlay ───────────────────────────────── */
 #mp-lobby{
   position:fixed; inset:0;
@@ -436,13 +259,36 @@ body.mobile-zoom {
   justify-content:center; align-items:center;
   z-index:100; text-align:center; padding:20px;
 }
-
 #mp-lobby h2{font-size:2.2rem;color:#d6c9ff;margin-bottom:22px}
-#mp-lobby .code{font-size:1.4rem;color:#9d8dff;margin:12px 0}
+
+#joinPane, #readyPane {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 550px;
+    margin-bottom: 5px;
+}
+
+.join-actions-left {
+  display: flex;
+  flex-direction: column;
+  margin-right: 6px;
+}
+.join-actions-left button {
+  min-width: auto;
+  width: 90px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  margin: 2px 0 !important;
+}
+
 #mp-lobby input{
-  padding:10px 14px;font-size:1.1rem;border-radius:6px;
+  padding:10px 14px;font-size:1.1rem;border-radius:8px;
   border:2px solid #5a4690;background:#241c3d;color:#d6c9ff;
-  width:230px;text-align:center;margin-right:8px;
+  width:230px;text-align:center;
+  margin: 6px;
+  height: 68px;
 }
 #mp-lobby button{
   background:linear-gradient(145deg,#3b2e6e,#2f254f);
@@ -453,6 +299,41 @@ body.mobile-zoom {
 #mp-lobby button:hover{background:linear-gradient(145deg,#52439a,#473b81)}
 #mp-lobby button:active{transform:scale(.96)}
 
+#host-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px 0;
+}
+#host-info p {
+    margin: 0 0 8px 0;
+    color: #c0b8dd;
+    font-size: 1rem;
+}
+.code-container {
+    display: flex;
+    align-items: center;
+    background: #241c3d;
+    border: 2px solid #5a4690;
+    border-radius: 8px;
+    padding: 5px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+#hostCode {
+    padding: 5px 10px;
+    font-size: 1.4rem;
+    font-family: monospace;
+    color: #9d8dff;
+    margin: 0;
+    user-select: text;
+}
+#copyCodeBtn {
+    margin-left: 8px !important;
+    padding: 8px 16px !important;
+    font-size: 1rem !important;
+    min-width: auto !important;
+}
+
 /* ── Multiplayer Rematch Screen ────────────────────────────── */
 #mp-rematch-page {
     position: fixed;
@@ -461,7 +342,7 @@ body.mobile-zoom {
     width: 100%;
     height: 100%;
     background: rgba(8, 6, 27, 0.95);
-    display: none; /* Changed by JS */
+    display: none;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -469,20 +350,17 @@ body.mobile-zoom {
     text-align: center;
     padding: 20px;
 }
-
 #mp-rematch-page h2 {
     font-size: 3rem;
     color: #d6c9ff;
     text-shadow: 0 0 12px #6b5cff, 0 0 24px #6b5cff;
     margin-bottom: 20px;
 }
-
 #mp-rematch-page p {
     font-size: 1.5rem;
     color: #ccc;
     margin-bottom: 20px;
 }
-
 #mp-rematch-page button {
     background: linear-gradient(145deg,#3b2e6e,#2f254f);
     border: 2px solid #5a4690;
@@ -496,15 +374,78 @@ body.mobile-zoom {
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     transition: background 0.2s, transform 0.1s;
 }
-
 #mp-rematch-page button:hover {
     background: linear-gradient(145deg,#52439a,#473b81);
 }
-
 #mp-rematch-page button:disabled {
     background: #2e2541;
     color: #786a9f;
     cursor: not-allowed;
 }
 
-/* ────────────────────────────────────────────────────────────── */
+/* ================================================================== */
+/* ── Mobile & Tablet Responsive Fixes ────────────────────────────── */
+/* ================================================================== */
+
+/* For smaller phones where any extra UI is too much */
+@media (max-width: 699px) {
+  #pad, #hud { display:none !important; }
+  #grid {
+    grid-template-columns:1fr !important;
+   }
+  #game-container {
+    grid-column:1 !important;
+  }
+}
+
+/* For tablets and wider phones in landscape */
+@media (max-width: 1024px) {
+    #pad { display: none !important; }
+
+    #grid {
+        grid-template-columns: 1fr;
+        position: relative;
+    }
+    #game-container {
+        grid-column: 1;
+    }
+    #hud {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 100%;
+        background: rgba(8, 6, 27, 0.8);
+        border: none;
+        border-left: 3px solid #4a3780;
+        box-shadow: -5px 0 15px rgba(0,0,0,0.4);
+        grid-column: auto;
+    }
+    #hudInner {
+        padding: 15px;
+    }
+    #hudInner h2 { font-size: 1.4rem; margin-bottom: 10px; }
+    .label { font-size: 0.8rem; margin: 8px 0; }
+    .barOuter { height: 18px; }
+    #depth, #score { font-size: 1.3rem; margin-bottom: 8px; }
+    #wins-counter { font-size: 1rem; margin-bottom: 8px; }
+    #lives { margin-bottom: 8px; }
+    #lives span { width: 18px; height: 18px; margin-right: 5px;}
+    #pauseGameBtn { padding: 10px; font-size: 1rem; }
+}
+
+/* "Please rotate" message for portrait mobile */
+@media (orientation:portrait) and (max-width:1024px){
+  body::before{
+    content:"Please rotate your device";
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.9);
+    display:flex;justify-content:center;align-items:center;
+    font-size:1.8rem;
+    z-index:999;
+    color: white;
+  }
+  #grid, #landing-page, #restart-page, #pause-menu, #graphics-settings-menu, #mp-lobby {
+     filter:blur(3px);
+  }
+}

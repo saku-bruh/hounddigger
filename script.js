@@ -7,15 +7,15 @@
 })();
 
 /* ===================== Multiplayer Globals ===================== */
-let localColor  = '#fff';            // local player's ball colour
-let remoteColor = '#fff';            // remote player's ball colour
-let localWins   = 0, remoteWins = 0; // milestone win counters
+let localColor  = '#fff';
+let remoteColor = '#fff';
+let localWins   = 0, remoteWins = 0;
 
 const mp = {
-  active:false,        // multiplayer session running?
-  isHost:false,        // am I the host?
-  conn:null,           // PeerJS DataConnection
-  remote:{             // last state received from peer
+  active:false,
+  isHost:false,
+  conn:null,
+  remote:{
     connected:false,
     x:0, y:0, vy:0, hp:0
   }
@@ -62,7 +62,7 @@ function seededRandom() {
     t ^= t + Math.imul(t ^ t >>> 7, t | 61);
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
-window.setGameSeed = (seed) => { gameSeed = seed; }; // Expose to multiplayer.js
+window.setGameSeed = (seed) => { gameSeed = seed; };
 
 const rnd = (a,b)=>a + seededRandom()*(b-a);
 const rndInt = (a,b)=> Math.floor(rnd(a,b+1));
@@ -143,7 +143,6 @@ function updateUIVisibility() {
 }
 function showLandingPage() { currentGameState = GAME_STATE.LANDING; updateUIVisibility(); }
 function startGameFlow(event) {
-    // FIX #1: Clean up any multiplayer connection before starting single-player
     if (mp.active && window.disconnectMultiplayer) {
         window.disconnectMultiplayer();
     }
@@ -285,7 +284,7 @@ function resetWorld(){
 }
 function startGame() {
     if (!mp.active) {
-        window.setGameSeed(Date.now()); // Use a new random seed for single-player
+        window.setGameSeed(Date.now());
     }
     resetWorld();
     for (let i = 0; i < 120; i++) ensureRow(i);
@@ -341,7 +340,6 @@ function findConnectedBlocks(startX, startY) {
 }
 
 /* ===================== Input Handler ===================== */
-// FIX #3: Replaced jump with climb mechanic
 function handleInput(ts) {
     if (ts < digLock || breaking.length > 0) return;
 
@@ -350,12 +348,12 @@ function handleInput(ts) {
     const U = key['w'] || key.ArrowUp;
     const D = key['s'] || key.ArrowDown;
     const grounded = onGround();
-    
+     
     let dx = 0;
     if (L) dx = -1;
     else if (R) dx = 1;
 
-    // --- CLIMBING LOGIC ---
+    // --- Block Climbing ---
     if (U && dx !== 0 && grounded) {
         const nextX = player.x + dx;
         const currentY = Math.round(player.y);
@@ -366,22 +364,17 @@ function handleInput(ts) {
 
         if (!wallBlockInfo.isGap && spaceAboveWallInfo.isGap && spaceAbovePlayerInfo.isGap) {
             player.x = nextX;
-            player.y -= 1; // Move up one block
+            player.y -= 1;
             player.vy = 0;
             digLock = ts + HORIZ_CD * 1.5;
-            playSound('jump'); // Using 'jump' sound for climbing
-            return; // End input processing for this frame
+            playSound('jump');
+            return;
         }
     }
 
-    // --- DIGGING & HORIZONTAL MOVEMENT ---
+    // --- Digging/Horizontal Moment ---
     let dy = 0;
     if (D) dy = 1;
-
-    // Prevent mid-air horizontal movement unless also digging down
-    if (!grounded && dy === 0) {
-        dx = 0;
-    }
 
     if (!dx && !dy) return;
 
@@ -391,10 +384,10 @@ function handleInput(ts) {
 
     const isBlockedByFaller = fallers.some(f => f.x === tx && Math.round(f.y) === ty);
     if (isBlockedByFaller) return;
-    
+     
     const fallerIndex = fallers.findIndex(f => f.x === tx && Math.round(f.y) === ty);
     let targetBlock = (fallerIndex > -1) ? fallers[fallerIndex] : getBlock(tx, ty);
-    
+     
     if (fallerIndex > -1) {
         targetBlock = {typeId: fallers[fallerIndex].typeId, hp: fallers[fallerIndex].hp};
     } else {
@@ -463,7 +456,6 @@ function handleInput(ts) {
         playSound('respawn');
     }
 }
-
 
 /* ===================== Game Logic ===================== */
 const onGround = ()=> {
@@ -589,26 +581,41 @@ function updateHUD(){
   livesEl.innerHTML = ''; for(let i=0;i<player.lives;i++) livesEl.innerHTML += '<span></span>';
   depthEl.textContent = Math.max(0, Math.floor(player.y + depthOffset)) +' m';
   scoreEl.textContent = calcScore();
+
+  const winsDisplay = document.getElementById('mp-wins-display');
+  if (mp.active) {
+      winsDisplay.style.display = 'block';
+      const winsCounter = document.getElementById('wins-counter');
+      winsCounter.textContent = `You: ${localWins} | Opponent: ${remoteWins}`;
+  } else {
+      if(winsDisplay) winsDisplay.style.display = 'none';
+  }
 }
 
-// FIX #4: Trigger multiplayer game over screen
 function loseLife(tsNow){
     player.lives--;
+
+    if (mp.active && mp.conn && mp.conn.open) {
+        if (mp.isHost) {
+            remoteWins++;
+            mp.conn.send({t:'w', local:localWins, remote:remoteWins});
+        } else {
+            mp.conn.send({ t: 'life_lost' });
+        }
+    }
+
     playSound('death');
     updateHUD();
     if (player.lives <= 0){
         if (mp.active && mp.conn && mp.conn.open) {
-            // This is a multiplayer game, trigger the rematch screen for both players
             currentGameState = GAME_STATE.GAME_OVER;
-            mp.conn.send({t: 'gg'}); // Inform other player they lost
-            window.showMpRematchPage(calcScore()); // Show local rematch screen
+            mp.conn.send({t: 'gg'});
+            window.showMpRematchPage(calcScore(), false);
         } else {
-            // This is a single-player game
             showRestartPage();
         }
         return;
     }
-    // Respawn logic if lives > 0
     const deathX = player.x;
     const deathY = Math.round(player.y);
     setBlock(deathX, deathY, BLOCK_TYPES.EMPTY.id);
@@ -680,6 +687,8 @@ function startMilestone(ts){
   msProgress = 0;
   player.vy = 0;
 }
+window.startMilestone = startMilestone;
+
 function updateStoneTypeForNewLevel(level) {
     const base = 85;
     const offset = ((level * 37) % 40) - 20;
@@ -692,11 +701,11 @@ function finishMilestone() {
     const milestoneLevel = (depthOffset / MILESTONE_INTERVAL) + 1;
     updateStoneTypeForNewLevel(milestoneLevel);
 
-    /* ===== decide winner (host authoritative) ===== */
     if (mp.active && mp.isHost && mp.conn && mp.conn.open){
-      const hostWon = player.y <= mp.remote.y;
+      const hostWon = player.y >= mp.remote.y;
       if (hostWon) localWins++; else remoteWins++;
       mp.conn.send({t:'w', local:localWins, remote:remoteWins});
+      mp.conn.send({t:'milestone_crossed'});
     }
 
     player.y = 0;
